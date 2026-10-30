@@ -1,0 +1,46 @@
+{
+  "name": "book",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tiptap/extension-bullet-list": "^3.32.1",
+    "@tiptap/extension-color": "^3.32.1",
+    "@tiptap/extension-font-family": "^3.32.1",
+    "@tiptap/extension-heading": "^3.32.1",
+    "@tiptap/extension-highlight": "^3.32.1",
+    "@tiptap/extension-list-item": "^3.32.1",
+    "@tiptap/extension-ordered-list": "^3.32.1",
+    "@tiptap/extension-text-align": "^3.32.1",
+    "@tiptap/extension-text-style": "^3.32.1",
+    "@tiptap/extension-underline": "^3.32.1",
+    "@tiptap/pm": "^3.32.1",
+    "@tiptap/react": "^3.32.1",
+    "@tiptap/starter-kit": "^3.32.1",
+    "html2canvas": "^1.4.1",
+    "idb": "^8.0.4",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^1.64.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwindcss": "^4.3.3",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "oxlint": "^1.89.0",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.5"
+  }
+}
