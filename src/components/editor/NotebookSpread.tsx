@@ -95,6 +95,9 @@ interface NotebookSpreadProps {
   onNext: () => void;
   onAddPage: () => void;
   spreadRef: React.RefObject<HTMLDivElement | null>;
+  onActiveEditorChange?: (editor: import('@tiptap/react').Editor | null) => void;
+  onToggleAI?: () => void;
+  isAIOpen?: boolean;
 }
 
 export default function NotebookSpread({
@@ -107,6 +110,9 @@ export default function NotebookSpread({
   onNext,
   onAddPage,
   spreadRef,
+  onActiveEditorChange,
+  onToggleAI,
+  isAIOpen,
 }: NotebookSpreadProps) {
   const savePage = useNotebookStore(s => s.savePage);
   const setSaveStatus = useNotebookStore(s => s.setSaveStatus);
@@ -195,13 +201,18 @@ export default function NotebookSpread({
 
   const activeEditor = (focusedSide === 'right' && rightEditor) ? rightEditor : (leftEditor || rightEditor);
 
+  // Notify parent of active editor changes (for AI panel)
+  React.useEffect(() => {
+    onActiveEditorChange?.(activeEditor ?? null);
+  }, [activeEditor, onActiveEditorChange]);
+
   const canPrev = leftIndex > 0;
   const canNext = rightIndex < totalPages - 1;
 
   return (
     <div className="flex flex-col h-full">
       {/* Formatting Toolbar */}
-      <FormattingToolbar editor={activeEditor} />
+      <FormattingToolbar editor={activeEditor} onToggleAI={onToggleAI} isAIOpen={isAIOpen} />
 
       {/* Notebook Spread */}
       <div className="flex-1 flex items-center justify-center p-6 overflow-auto" style={{ background: '#EDE8DC' }}>

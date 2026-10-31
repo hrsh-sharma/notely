@@ -109,18 +109,21 @@ body {
 .ProseMirror {
   outline: none;
   min-height: 100%;
-  font-size: 16px;
+  font-size: 15px;
   line-height: var(--line-height-px);
-  color: #1a1a1a;
+  color: #1C1917;
   caret-color: #1a1a1a;
   padding-left: calc(var(--margin-width) + 12px);
-  padding-right: 16px;
-  padding-top: 4px;
+  padding-right: 20px;
+  padding-top: 6px;
+  padding-bottom: 32px;
   user-select: text !important;
   -webkit-user-select: text !important;
   cursor: text;
+  font-family: 'Patrick Hand', cursive;
 }
 
+/* ── Paragraphs ── */
 .tiptap-editor p {
   margin: 0;
   padding: 0;
@@ -128,58 +131,127 @@ body {
   min-height: var(--line-height-px);
 }
 
+/* ── Headings ── */
 .tiptap-editor h1 {
   font-size: 22px;
   font-weight: 700;
-  line-height: var(--line-height-px);
-  margin: 0;
+  line-height: calc(var(--line-height-px) * 1.5);
+  margin: 0 0 2px 0;
   padding: 0;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  color: #1C1917;
+  border-bottom: 2px solid #E85D26;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .tiptap-editor h2 {
-  font-size: 19px;
-  font-weight: 600;
-  line-height: var(--line-height-px);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: calc(var(--line-height-px) * 1.2);
   margin: 0;
   padding: 0;
+  color: #292524;
+  letter-spacing: 0.005em;
+  border-left: 3px solid #E85D26;
+  padding-left: 8px;
+  margin-top: 2px;
+  margin-bottom: 2px;
 }
 
 .tiptap-editor h3 {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   line-height: var(--line-height-px);
   margin: 0;
   padding: 0;
+  color: #44403C;
+  font-style: italic;
 }
 
+/* ── Lists ── */
 .tiptap-editor ul,
 .tiptap-editor ol {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 22px;
+}
+
+.tiptap-editor ul {
+  list-style-type: disc;
+}
+
+.tiptap-editor ol {
+  list-style-type: decimal;
 }
 
 .tiptap-editor li {
   line-height: var(--line-height-px);
+  padding-left: 2px;
 }
 
+.tiptap-editor li::marker {
+  color: #E85D26;
+  font-weight: 700;
+}
+
+/* ── Inline formatting ── */
+.tiptap-editor strong {
+  font-weight: 700;
+  color: #1C1917;
+}
+
+.tiptap-editor em {
+  font-style: italic;
+  color: #44403C;
+}
+
+.tiptap-editor u {
+  text-decoration-color: #E85D26;
+  text-underline-offset: 2px;
+}
+
+.tiptap-editor s {
+  color: #78716C;
+}
+
+/* Inline code */
+.tiptap-editor code {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  background: #F5F0E8;
+  border: 1px solid #E7E2D9;
+  border-radius: 3px;
+  padding: 0 4px;
+  color: #7C3AED;
+}
+
+/* ── Highlight ── */
 .tiptap-editor mark {
   border-radius: 2px;
   padding: 0 2px;
 }
 
+/* ── Text selection ── */
 .tiptap-editor::selection,
 .tiptap-editor *::selection {
-  background: rgba(59, 130, 246, 0.3);
+  background: rgba(232, 93, 38, 0.18);
+}
+
+/* ── Horizontal rule ── */
+.tiptap-editor hr {
+  border: none;
+  border-top: 2px dashed #D6CFC4;
+  margin: 4px 0;
 }
 
 /* Placeholder */
 .tiptap-editor p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
-  color: #aaa;
+  color: #C4BAB0;
   pointer-events: none;
   height: 0;
+  font-style: italic;
 }
 
 /* ─── Notebook cover shine effect ─── */
@@ -405,4 +477,14 @@ body {
   border-radius: 6px;
   margin: 6px 0;
   display: block;
+}
+
+/* ── AI Panel slide-in animation ──────────────────────────────────────────── */
+@keyframes ai-panel-slide-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.ai-panel-enter {
+  animation: ai-panel-slide-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }

@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
   ArrowLeft, Save, Download, Settings, Menu, BookOpen,
   LayoutTemplate, Smartphone, CheckCircle, AlertCircle, Loader2,
-  FileDown, Printer,
+  FileDown, Printer, Sparkles,
 } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import type { SaveStatus, ViewMode, PaperStyle } from '../../types';
@@ -12,6 +12,8 @@ import { exportPageAsPDF, exportNotebookAsPDF, printElement } from '../../servic
 interface NotebookToolbarProps {
   onBack: () => void;
   spreadRef: React.RefObject<HTMLDivElement | null>;
+  onToggleAI?: () => void;
+  isAIOpen?: boolean;
 }
 
 function SaveIndicator({ status }: { status: SaveStatus }) {
@@ -42,7 +44,7 @@ function SaveIndicator({ status }: { status: SaveStatus }) {
   }
 }
 
-export default function NotebookToolbar({ onBack, spreadRef }: NotebookToolbarProps) {
+export default function NotebookToolbar({ onBack, spreadRef, onToggleAI, isAIOpen }: NotebookToolbarProps) {
   const { activeNotebook, saveStatus, viewMode, setViewMode, toggleSidebar, pages, currentPageIndex, setPaperStyle } = useNotebookStore(
     useShallow(s => ({
       activeNotebook: s.activeNotebook,
@@ -190,6 +192,22 @@ export default function NotebookToolbar({ onBack, spreadRef }: NotebookToolbarPr
             <Smartphone size={15} />
           </button>
         </div>
+
+        {/* AI Notes Button */}
+        {onToggleAI && (
+          <button
+            onClick={onToggleAI}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+              isAIOpen
+                ? 'bg-violet-600 text-white shadow-sm'
+                : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-sm'
+            }`}
+            title="AI Assistant – Generate notes with Gemini"
+          >
+            <Sparkles size={15} />
+            <span className="hidden sm:inline">AI Notes</span>
+          </button>
+        )}
 
         {/* Export */}
         <div className="relative" ref={exportRef}>

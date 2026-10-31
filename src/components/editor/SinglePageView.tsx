@@ -43,6 +43,9 @@ interface SinglePageViewProps {
   onNext: () => void;
   onAddPage: () => void;
   spreadRef: React.RefObject<HTMLDivElement | null>;
+  onActiveEditorChange?: (editor: import('@tiptap/react').Editor | null) => void;
+  onToggleAI?: () => void;
+  isAIOpen?: boolean;
 }
 
 export default function SinglePageView({
@@ -53,6 +56,9 @@ export default function SinglePageView({
   onNext,
   onAddPage,
   spreadRef,
+  onActiveEditorChange,
+  onToggleAI,
+  isAIOpen,
 }: SinglePageViewProps) {
   const savePage = useNotebookStore(s => s.savePage);
   const setSaveStatus = useNotebookStore(s => s.setSaveStatus);
@@ -83,6 +89,11 @@ export default function SinglePageView({
 
   React.useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
 
+  // Notify parent of editor (for AI panel)
+  React.useEffect(() => {
+    onActiveEditorChange?.(editor ?? null);
+  }, [editor, onActiveEditorChange]);
+
   const activeNotebook = useNotebookStore(s => s.activeNotebook);
 
   const paperClass = activeNotebook?.paperStyle === 'grid'
@@ -95,7 +106,7 @@ export default function SinglePageView({
 
   return (
     <div className="flex flex-col h-full">
-      <FormattingToolbar editor={editor} />
+      <FormattingToolbar editor={editor} onToggleAI={onToggleAI} isAIOpen={isAIOpen} />
 
       <div className="flex-1 flex items-center justify-center p-4 overflow-auto" style={{ background: '#EDE8DC' }}>
         <button

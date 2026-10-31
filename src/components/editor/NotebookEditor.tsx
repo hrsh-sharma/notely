@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
+import type { Editor } from '@tiptap/react';
 import { Lock, LogIn } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { useNotebookStore } from '../../stores/notebookStore';
@@ -8,6 +9,7 @@ import NotebookSpread from './NotebookSpread';
 import SinglePageView from './SinglePageView';
 import PageNavigation from './PageNavigation';
 import AuthModal from '../auth/AuthModal';
+import AIPanel from './AIPanel';
 
 interface NotebookEditorProps {
   onBack: () => void;
@@ -41,10 +43,23 @@ export default function NotebookEditor({ onBack }: NotebookEditorProps) {
   const user = useAuthStore(s => s.user);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const spreadRef = useRef<HTMLDivElement>(null);
+  // ── AI Panel ────────────────────────────────────────────────────────────────
+  const [isAIOpen, setIsAIOpen] = useState(false);
+  const activeEditorRef = useRef<Editor | null>(null);
+  const [activeEditorState, setActiveEditorState] = useState<Editor | null>(null);
 
-  // Spread view shows pairs of pages (0-1, 2-3, etc.)
-  // currentPageIndex is always the left page of the spread (even index)
+  const handleActiveEditorChange = useCallback((editor: Editor | null) => {
+    activeEditorRef.current = editor;
+    setActiveEditorState(editor);
+  }, []);
+
+  const toggleAI = useCallback(() => {
+    setIsAIOpen(o => !o);
+  }, []);
+
+  // ── Spread logic ────────────────────────────────────────────────────────────
+  const spreadRef = useRef<HTMLDivElement | null>(null);
+
   const leftPageIndex = viewMode === 'spread'
     ? (currentPageIndex % 2 === 0 ? currentPageIndex : currentPageIndex - 1)
     : currentPageIndex;
@@ -97,7 +112,7 @@ export default function NotebookEditor({ onBack }: NotebookEditorProps) {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Top toolbar */}
-      <NotebookToolbar onBack={onBack} spreadRef={spreadRef} />
+      <NotebookToolbar onBack={onBack} spreadRef={spreadRef} onToggleAI={toggleAI} isAIOpen={isAIOpen} />
 
       {/* Guest Mode Notice Banner */}
       {!user && (
@@ -118,6 +133,7 @@ export default function NotebookEditor({ onBack }: NotebookEditorProps) {
         </div>
       )}
 
+      {/* Main content area: sidebar + editor + AI panel */}
       <div className="flex flex-1 min-h-0">
         {/* Sidebar: page navigation */}
         {isSidebarOpen && (
@@ -143,6 +159,9 @@ export default function NotebookEditor({ onBack }: NotebookEditorProps) {
               onNext={handleNext}
               onAddPage={handleAddPage}
               spreadRef={spreadRef}
+              onActiveEditorChange={handleActiveEditorChange}
+              onToggleAI={toggleAI}
+              isAIOpen={isAIOpen}
             />
           ) : (
             <SinglePageView
@@ -153,9 +172,22 @@ export default function NotebookEditor({ onBack }: NotebookEditorProps) {
               onNext={handleNext}
               onAddPage={handleAddPage}
               spreadRef={spreadRef}
+              onActiveEditorChange={handleActiveEditorChange}
+              onToggleAI={toggleAI}
+              isAIOpen={isAIOpen}
             />
           )}
         </div>
+
+        {/* AI Panel — slides in from the right */}
+        {isAIOpen && (
+          <div className="flex-shrink-0 border-l border-stone-200 overflow-hidden ai-panel-enter">
+            <AIPanel
+              editor={activeEditorState}
+              onClose={() => setIsAIOpen(false)}
+            />
+          </div>
+        )}
       </div>
 
       {/* Authentication Modal */}

@@ -4,7 +4,7 @@ import {
   Bold, Italic, Underline, Strikethrough,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   List, ListOrdered, Undo2, Redo2,
-  Highlighter, Type, Palette, ChevronDown, ImagePlus, Loader2,
+  Highlighter, Type, Palette, ChevronDown, ImagePlus, Loader2, Sparkles,
 } from 'lucide-react';
 import { HIGHLIGHT_COLORS, TEXT_COLORS, FONT_FAMILIES, FONT_SIZES } from '../../types';
 import { uploadNotebookImage, readFileAsDataURL, validateImageFile } from '../../services/imageUpload';
@@ -12,6 +12,8 @@ import { useNotebookStore } from '../../stores/notebookStore';
 
 interface FormattingToolbarProps {
   editor: Editor | null;
+  onToggleAI?: () => void;
+  isAIOpen?: boolean;
 }
 
 interface DropdownProps {
@@ -84,7 +86,7 @@ function Divider() {
   return <div className="w-px h-5 bg-gray-200 mx-1 flex-shrink-0" />;
 }
 
-export default function FormattingToolbar({ editor }: FormattingToolbarProps) {
+export default function FormattingToolbar({ editor, onToggleAI, isAIOpen }: FormattingToolbarProps) {
   if (!editor) return null;
 
   const currentFontSize = editor.getAttributes('textStyle').fontSize || '15px';
@@ -350,6 +352,22 @@ export default function FormattingToolbar({ editor }: FormattingToolbarProps) {
       )}
 
       <Divider />
+
+      {/* AI Notes Button */}
+      {onToggleAI && (
+        <button
+          onMouseDown={(e) => { e.preventDefault(); onToggleAI(); }}
+          title="AI Notes – Generate notes with Gemini"
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            isAIOpen
+              ? 'bg-violet-600 text-white shadow-sm'
+              : 'bg-gradient-to-r from-violet-50 to-indigo-50 text-violet-700 border border-violet-200 hover:from-violet-100 hover:to-indigo-100'
+          }`}
+        >
+          <Sparkles size={13} />
+          <span>AI</span>
+        </button>
+      )}
 
       {/* Type indicator */}
       <div className="ml-auto flex items-center gap-1 text-xs text-gray-400">

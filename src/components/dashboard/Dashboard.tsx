@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Plus, BookOpen, Pencil, Trash2, Search, ArrowUpDown, LogIn, X, Pin } from 'lucide-react';
+import { Plus, BookOpen, Pencil, Trash2, Search, ArrowUpDown, LogIn, X, Pin, Sparkles } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { useNotebookStore } from '../../stores/notebookStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -12,6 +12,7 @@ import AuthModal from '../auth/AuthModal';
 import ProfileDropdown from '../common/ProfileDropdown';
 import ProfileModal from '../common/ProfileModal';
 import PinUnlockModal from '../common/PinUnlockModal';
+import AIDashboardModal from './AIDashboardModal';
 import notelyLogo from '../../assets/Notely.png';
 import type { Notebook } from '../../types';
 
@@ -43,6 +44,7 @@ export default function Dashboard({ onOpenNotebook }: DashboardProps) {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [unlockingNotebook, setUnlockingNotebook] = useState<Notebook | null>(null);
   const [unlockAction, setUnlockAction] = useState<'open' | 'edit' | 'delete'>('open');
+  const [showAIModal, setShowAIModal] = useState(false);
 
   const { user, signOut } = useAuthStore();
   const { profile } = useProfileStore();
@@ -248,6 +250,15 @@ export default function Dashboard({ onOpenNotebook }: DashboardProps) {
                   onSignOut={signOut}
                   onOpenProfile={() => setShowProfileModal(true)}
                 />
+
+                {/* AI Notes CTA */}
+                <button
+                  onClick={() => setShowAIModal(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-xs font-semibold shadow-sm transition-all hover:shadow hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <Sparkles size={14} className="text-violet-200" />
+                  <span>AI Notes</span>
+                </button>
 
                 {/* New Notebook CTA */}
                 <button
@@ -469,6 +480,14 @@ export default function Dashboard({ onOpenNotebook }: DashboardProps) {
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
       />
+
+      {/* AI Dashboard Modal */}
+      {showAIModal && (
+        <AIDashboardModal
+          onClose={() => setShowAIModal(false)}
+          onNotebookCreated={(id) => onOpenNotebook(id)}
+        />
+      )}
 
       {/* Delete Confirmation */}
       {deletingId && (
