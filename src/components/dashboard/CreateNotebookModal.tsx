@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { X, Book, Sparkles, Check } from 'lucide-react';
+import { X, Book, Sparkles, Check, Lock } from 'lucide-react';
 import { COVER_OPTIONS, CATEGORY_PRESETS, type PaperStyle } from '../../types';
 import { useNotebookStore } from '../../stores/notebookStore';
 
 interface CreateNotebookModalProps {
   onClose: () => void;
-  onCreated: (id: string) => void;
+  onCreated: (id: string, wasLocked?: boolean) => void;
 }
 
 const PAPER_STYLES: Array<{ id: PaperStyle; label: string; desc: string }> = [
@@ -17,12 +17,18 @@ const PAPER_STYLES: Array<{ id: PaperStyle; label: string; desc: string }> = [
 
 export default function CreateNotebookModal({ onClose, onCreated }: CreateNotebookModalProps) {
   const createNotebook = useNotebookStore(s => s.createNotebook);
+
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState(CATEGORY_PRESETS[0]);
   const [customCategory, setCustomCategory] = useState('');
   const [paperStyle, setPaperStyle] = useState<PaperStyle>('ruled');
   const [description, setDescription] = useState('');
   const [selectedColor, setSelectedColor] = useState(COVER_OPTIONS[0].color);
+
+  // PIN Lock
+  const [isLocked, setIsLocked] = useState(false);
+  const [pinCode, setPinCode] = useState('');
+
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,6 +38,10 @@ export default function CreateNotebookModal({ onClose, onCreated }: CreateNotebo
     e.preventDefault();
     if (!title.trim()) {
       setError('Please provide a title for your notebook');
+      return;
+    }
+    if (isLocked && pinCode.length !== 4) {
+      setError('Please enter a 4-digit PIN to lock this notebook');
       return;
     }
     setIsCreating(true);
@@ -44,8 +54,15 @@ export default function CreateNotebookModal({ onClose, onCreated }: CreateNotebo
         coverColor: selectedColor,
         coverPattern: 'solid',
         paperStyle,
+        isLocked,
+        pinCode: isLocked ? pinCode : undefined,
       });
-      onCreated(notebook.id);
+      if (isLocked && pinCode) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`notely_pin_${notebook.id}`, pinCode);
+        }
+      }
+      onCreated(notebook.id, isLocked);
     } catch (err) {
       setError('Failed to create notebook. Please try again.');
     } finally {
@@ -82,6 +99,12 @@ export default function CreateNotebookModal({ onClose, onCreated }: CreateNotebo
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+          {error && (
+            <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-200 font-medium">
+              {error}
+            </p>
+          )}
+
           {/* Cover Color Selection */}
           <div>
             <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
@@ -118,11 +141,10 @@ export default function CreateNotebookModal({ onClose, onCreated }: CreateNotebo
               type="text"
               value={title}
               onChange={e => { setTitle(e.target.value); setError(''); }}
-              placeholder="e.g. Product Strategy, Daily Journal, Engineering Log..."
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm font-medium transition-all"
+              placeholder="Enter notebook title (e.g. Daily Journal, Work Strategy)..."
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-stone-800 focus:ring-2 focus:ring-stone-100 outline-none text-sm font-medium transition-all"
               autoFocus
             />
-            {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
           </div>
 
           {/* Category / Topic */}
@@ -188,9 +210,70 @@ export default function CreateNotebookModal({ onClose, onCreated }: CreateNotebo
               type="text"
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="e.g. Brainstorms, reflections, architecture notes"
-              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-xs text-gray-700 transition-all"
+              placeholder="Brief summary or purpose of this notebook..."
+              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-stone-800 focus:ring-2 focus:ring-stone-100 outline-none text-xs text-gray-700 transition-all"
             />
+          </div>
+
+          {/* PIN Lock Protection */}
+          <div className="p-3.5 rounded-2xl border border-stone-200/90 bg-stone-50/70">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${isLocked ? 'bg-amber-100 text-amber-700' : 'bg-stone-200/70 text-stone-500'}`}>
+                  <Lock size={15} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-stone-800">PIN Protection</p>
+                  <p className="text-[11px] text-stone-500">Lock notebook with a 4-digit PIN</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const nextState = !isLocked;
+                  setIsLocked(nextState);
+                  if (!nextState) {
+                    setPinCode('');
+                  }
+                }}
+                className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+                  isLocked ? 'bg-stone-900' : 'bg-stone-300'
+                }`}
+              >
+                <div
+                  className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                    isLocked ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {isLocked && (
+              <div className="mt-3 pt-3 border-t border-stone-200/60 animate-fade-in space-y-2">
+                <label className="block text-[11px] font-semibold text-stone-700">
+                  Set 4-Digit PIN:
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    maxLength={4}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={pinCode}
+                    onChange={(e) => {
+                      setPinCode(e.target.value.replace(/\D/g, '').slice(0, 4));
+                      setError('');
+                    }}
+                    placeholder="••••"
+                    className="w-28 tracking-widest text-center px-3 py-2 text-sm font-mono font-bold rounded-xl border border-stone-300 bg-white focus:border-stone-900 outline-none"
+                    autoFocus
+                  />
+                  <span className="text-[11px] text-stone-400">
+                    {pinCode.length}/4 digits
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Actions */}

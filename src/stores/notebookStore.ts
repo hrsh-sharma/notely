@@ -31,6 +31,7 @@ interface NotebookStore {
   createNotebook: (data: Partial<Notebook>) => Promise<Notebook>;
   updateNotebook: (id: string, data: Partial<Notebook>) => Promise<void>;
   deleteNotebook: (id: string) => Promise<void>;
+  togglePinNotebook: (id: string) => Promise<void>;
   openNotebook: (id: string) => Promise<void>;
   closeNotebook: () => void;
 
@@ -92,6 +93,9 @@ export const useNotebookStore = create<NotebookStore>()(
         createdAt: now,
         updatedAt: now,
         description: data.description || '',
+        isLocked: data.isLocked ?? false,
+        pinCode: data.pinCode || undefined,
+        isPinned: data.isPinned ?? false,
       };
       await db.saveNotebook(notebook);
 
@@ -137,6 +141,28 @@ export const useNotebookStore = create<NotebookStore>()(
       cloudDeleteNotebook(id);
       const notebooks = await db.getAllNotebooks();
       set({ notebooks });
+    },
+
+    togglePinNotebook: async (id) => {
+      const notebook = await db.getNotebook(id);
+      if (!notebook) return;
+      const nextPinned = !notebook.isPinned;
+      const updated = { ...notebook, isPinned: nextPinned, updatedAt: Date.now() };
+      if (typeof window !== 'undefined') {
+        if (nextPinned) {
+          localStorage.setItem(`notely_pinned_${id}`, 'true');
+        } else {
+          localStorage.removeItem(`notely_pinned_${id}`);
+        }
+      }
+      await db.saveNotebook(updated);
+      cloudSaveNotebook(updated);
+
+      const notebooks = await db.getAllNotebooks();
+      set({ notebooks });
+      if (get().activeNotebook?.id === id) {
+        set({ activeNotebook: updated });
+      }
     },
 
     openNotebook: async (id) => {

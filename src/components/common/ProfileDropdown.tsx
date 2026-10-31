@@ -1,15 +1,13 @@
-﻿import React, { useEffect, useRef, useState } from "react";
-import { User, Settings, LogOut, ChevronDown, Cloud, Shield } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { User, LogOut, ChevronDown, Cloud } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { UserProfile } from "../../stores/profileStore";
-import notelyLogo from "../../assets/Notely.png";
 
 interface ProfileDropdownProps {
   user: SupabaseUser;
   profile: UserProfile | null;
   onSignOut: () => void;
   onOpenProfile: () => void;
-  onOpenSettings: () => void;
 }
 
 export default function ProfileDropdown({
@@ -17,7 +15,6 @@ export default function ProfileDropdown({
   profile,
   onSignOut,
   onOpenProfile,
-  onOpenSettings,
 }: ProfileDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -40,110 +37,64 @@ export default function ProfileDropdown({
       <button
         id="profile-dropdown-trigger"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 bg-white/90 border border-stone-200 rounded-2xl px-2.5 py-1.5 shadow-sm hover:shadow-md hover:bg-white transition-all group"
+        className="flex items-center gap-2.5 bg-white/90 border border-stone-200 rounded-2xl px-3 py-1.5 shadow-sm hover:shadow-md hover:bg-white transition-all group"
       >
         <div
-          className="w-7 h-7 rounded-xl text-white flex items-center justify-center font-black text-xs shadow flex-shrink-0"
+          className="w-7 h-7 rounded-xl text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0"
           style={{ background: "linear-gradient(135deg, #E85D26, #f59e0b)" }}
         >
           {avatarLetter}
         </div>
-        <div className="hidden md:flex flex-col items-start">
-          <span className="text-[11px] font-bold text-stone-800 leading-tight max-w-[110px] truncate">{displayName}</span>
-          <span className="text-[9px] text-emerald-600 font-semibold leading-none flex items-center gap-1">
-            <Cloud size={8} /> Cloud Synced
+        <div className="hidden md:flex flex-col items-start text-left">
+          <span className="text-[12px] font-semibold text-stone-800 leading-tight max-w-[120px] truncate">{displayName}</span>
+          <span className="text-[10px] text-emerald-600 font-medium leading-none flex items-center gap-1 mt-0.5">
+            <Cloud size={9} /> Cloud Synced
           </span>
         </div>
-        <ChevronDown size={12} className={`text-stone-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={13} className={`text-stone-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {/* ── Dropdown Panel ── */}
       {open && (
         <div
-          className="absolute right-0 mt-2.5 w-72 bg-white rounded-3xl shadow-2xl border border-stone-100 overflow-hidden z-50 animate-pop-in"
-          style={{ transformOrigin: "top right", fontFamily: "'Inter', 'Outfit', sans-serif" }}
+          className="absolute right-0 mt-2 w-64 bg-[#FEFDF9] rounded-2xl shadow-xl border border-stone-200/80 overflow-hidden z-50 animate-pop-in p-1.5"
+          style={{ transformOrigin: "top right" }}
         >
-          {/* Header */}
-          <div className="relative overflow-hidden px-4 py-4"
-            style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #2d1a00 70%, #1a1a1a 100%)" }}>
-            {/* glow */}
-            <div className="absolute inset-0 opacity-30"
-              style={{ backgroundImage: "radial-gradient(circle at 80% 50%, #E85D26 0%, transparent 60%)" }} />
-
-            <div className="flex items-center gap-3 relative z-10">
-              {/* Avatar */}
-              <div
-                className="w-11 h-11 rounded-2xl flex items-center justify-center font-black text-lg text-white shadow-lg ring-2 ring-white/10 flex-shrink-0"
-                style={{ background: "linear-gradient(135deg, #E85D26, #f59e0b)" }}
-              >
-                {avatarLetter}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white truncate">{displayName}</p>
-                <p className="text-[10px] text-white/40 truncate">{email}</p>
-              </div>
-              {/* Notely logo */}
-              <img src={notelyLogo} alt="Notely" className="w-7 h-7 object-contain opacity-60 flex-shrink-0" />
+          {/* Header user info */}
+          <div className="px-3 py-2.5 flex items-center gap-3 border-b border-stone-100">
+            <div
+              className="w-9 h-9 rounded-xl text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, #E85D26, #f59e0b)" }}
+            >
+              {avatarLetter}
             </div>
-
-            {/* UUID chip */}
-            <div className="mt-2.5 flex items-center gap-1.5 relative z-10">
-              <Shield size={9} className="text-orange-400" />
-              <span className="text-[9px] font-mono text-white/30">{user.id.slice(0, 16)}…</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-stone-900 truncate leading-snug">{displayName}</p>
+              <p className="text-[11px] text-stone-400 truncate leading-snug">{email}</p>
             </div>
           </div>
 
           {/* Menu Items */}
-          <div className="py-2">
+          <div className="pt-1 pb-0.5 space-y-0.5">
             <button
-              id="profile-menu-my-profile"
+              id="profile-menu-profile"
               onClick={() => { onOpenProfile(); setOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-stone-50 transition-colors text-left group/item"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-stone-700 hover:text-stone-900 hover:bg-stone-100 transition-colors text-left group"
             >
-              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform">
-                <User size={15} />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-stone-800 leading-tight">My Profile</p>
-                <p className="text-[10px] text-stone-400 leading-tight">View & edit your details</p>
-              </div>
+              <User size={15} className="text-stone-400 group-hover:text-stone-700 transition-colors" />
+              <span>Profile</span>
             </button>
 
-            <button
-              id="profile-menu-settings"
-              onClick={() => { onOpenSettings(); setOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-stone-50 transition-colors text-left group/item"
-            >
-              <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-500 flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform">
-                <Settings size={15} />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-stone-800 leading-tight">Account Settings</p>
-                <p className="text-[10px] text-stone-400 leading-tight">Manage account preferences</p>
-              </div>
-            </button>
-
-            <div className="mx-4 my-1 border-t border-stone-100" />
+            <div className="my-1 border-t border-stone-100" />
 
             <button
               id="profile-menu-signout"
               onClick={() => { onSignOut(); setOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left group/item"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-stone-600 hover:text-red-600 hover:bg-red-50 transition-colors text-left group"
             >
-              <div className="w-8 h-8 rounded-xl bg-red-50 text-red-400 flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform">
-                <LogOut size={15} />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-red-500 leading-tight">Sign Out</p>
-                <p className="text-[10px] text-stone-400 leading-tight">End your current session</p>
-              </div>
+              <LogOut size={15} className="text-stone-400 group-hover:text-red-500 transition-colors" />
+              <span>Sign out</span>
             </button>
-          </div>
-
-          {/* Footer */}
-          <div className="px-4 py-2.5 border-t border-stone-100 flex items-center justify-center gap-1.5 bg-stone-50/50">
-            <img src={notelyLogo} alt="" className="w-3.5 h-3.5 object-contain opacity-40" />
-            <span className="text-[9px] text-stone-400 font-bold tracking-widest uppercase">Notely</span>
           </div>
         </div>
       )}

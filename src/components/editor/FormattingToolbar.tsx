@@ -1,12 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { Editor } from '@tiptap/react';
 import {
   Bold, Italic, Underline, Strikethrough,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   List, ListOrdered, Undo2, Redo2,
-  Highlighter, Type, Palette, ChevronDown,
+  Highlighter, Type, Palette, ChevronDown, ImagePlus, Loader2,
 } from 'lucide-react';
 import { HIGHLIGHT_COLORS, TEXT_COLORS, FONT_FAMILIES, FONT_SIZES } from '../../types';
+import { uploadNotebookImage, readFileAsDataURL, validateImageFile } from '../../services/imageUpload';
+import { useNotebookStore } from '../../stores/notebookStore';
 
 interface FormattingToolbarProps {
   editor: Editor | null;
@@ -89,6 +91,60 @@ export default function FormattingToolbar({ editor }: FormattingToolbarProps) {
   const currentFontFamily = editor.getAttributes('textStyle').fontFamily || 'Patrick Hand';
   const currentFamilyObj = FONT_FAMILIES.find(f => f.value === currentFontFamily);
   const currentFamilyLabel = currentFamilyObj ? currentFamilyObj.label.split(' ')[0] : 'Font';
+
+  // Image upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const activeNotebook = useNotebookStore(s => s.activeNotebook);
+
+  const handleImageFile = useCallback(async (file: File) => {
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setUploadError((validation as any).error);
+      setTimeout(() => setUploadError(''), 4000);
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadError('');
+
+    if (activeNotebook?.id) {
+      // Try Supabase Storage first
+      const result = await uploadNotebookImage(file, activeNotebook.id, setUploadProgress);
+      if (result.success) {
+        editor.chain().focus().setImage({ src: result.url, alt: file.name }).run();
+        setIsUploading(false);
+        return;
+      }
+      // If bucket missing or error, fall back to base64
+      console.warn('Supabase upload failed, using base64 fallback:', result.error);
+    }
+
+    // Base64 fallback (works offline and without bucket setup)
+    try {
+      const dataUrl = await readFileAsDataURL(file);
+      editor.chain().focus().setImage({ src: dataUrl, alt: file.name }).run();
+    } catch {
+      setUploadError('Failed to insert image. Please try again.');
+      setTimeout(() => setUploadError(''), 4000);
+    }
+    setIsUploading(false);
+  }, [editor, activeNotebook]);
+
+  const handleImageButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Reset so the same file can be re-selected
+    e.target.value = '';
+    await handleImageFile(file);
+  };
 
   return (
     <div className="flex items-center gap-1.5 px-4 py-2 bg-white border-b border-stone-200 flex-wrap z-10 shadow-xs">
@@ -266,6 +322,32 @@ export default function FormattingToolbar({ editor }: FormattingToolbarProps) {
           </button>
         </div>
       </Dropdown>
+
+      <Divider />
+
+      {/* Insert Image */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/jpg,image/webp"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <ToolbarBtn
+        onClick={handleImageButtonClick}
+        disabled={isUploading}
+        title="Insert image (PNG, JPG, WEBP · max 8 MB)"
+      >
+        {isUploading ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} />}
+      </ToolbarBtn>
+      {uploadError && (
+        <span className="text-[11px] text-red-600 font-medium ml-1 max-w-[200px] truncate" title={uploadError}>
+          {uploadError}
+        </span>
+      )}
+      {isUploading && uploadProgress > 0 && uploadProgress < 100 && (
+        <span className="text-[11px] text-stone-400 ml-1">{uploadProgress}%</span>
+      )}
 
       <Divider />
 

@@ -14,7 +14,7 @@ export async function getCurrentUser() {
 
 // Convert Notebook model to Supabase row format
 function toSupabaseNotebook(n: Notebook, userId: string) {
-  return {
+  const payload: any = {
     id: n.id,
     user_id: userId,
     title: n.title,
@@ -23,13 +23,32 @@ function toSupabaseNotebook(n: Notebook, userId: string) {
     cover_pattern: n.coverPattern || 'solid',
     paper_style: n.paperStyle || 'ruled',
     description: n.description || '',
+    is_locked: n.isLocked ?? false,
+    pin_code: n.pinCode || null,
+    is_pinned: n.isPinned ?? false,
     created_at: new Date(n.createdAt).toISOString(),
     updated_at: new Date(n.updatedAt).toISOString(),
   };
+  return payload;
 }
 
 // Convert Supabase row to Notebook model
-function fromSupabaseNotebook(row: any): Notebook {
+function fromSupabaseNotebook(row: any, localExisting?: Notebook | null): Notebook {
+  const localPin = localExisting?.pinCode || (typeof window !== 'undefined' ? localStorage.getItem(`notely_pin_${row.id}`) : null);
+  const localIsLocked = Boolean(localExisting?.isLocked || (localPin && localPin.length === 4));
+
+  const hasCloudLockField = 'is_locked' in row && row.is_locked !== null;
+  // If cloud row has explicit lock, use it; but NEVER wipe out local lock if local has a valid PIN!
+  const isLocked = hasCloudLockField 
+    ? Boolean(row.is_locked || (row.pin_code && row.pin_code.length === 4) || localIsLocked)
+    : localIsLocked;
+  const pinCode = (row.pin_code && row.pin_code.length === 4) 
+    ? row.pin_code 
+    : (localPin || undefined);
+
+  const localPinned = localExisting?.isPinned || (typeof window !== 'undefined' ? localStorage.getItem(`notely_pinned_${row.id}`) === 'true' : false);
+  const isPinned = 'is_pinned' in row && row.is_pinned !== null ? Boolean(row.is_pinned) : localPinned;
+
   return {
     id: row.id,
     title: row.title,
@@ -38,21 +57,32 @@ function fromSupabaseNotebook(row: any): Notebook {
     coverColor: row.cover_color,
     coverPattern: row.cover_pattern,
     paperStyle: row.paper_style,
-    pageCount: row.page_count ?? 1,  // column may not exist; default to 1
+    pageCount: row.page_count ?? localExisting?.pageCount ?? 1,
     description: row.description || '',
-    createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
-    updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
+    isLocked,
+    pinCode,
+    isPinned,
+    createdAt: row.created_at ? new Date(row.created_at).getTime() : (localExisting?.createdAt ?? Date.now()),
+    updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : (localExisting?.updatedAt ?? Date.now()),
   };
 }
 
 // Convert Page model to Supabase row format
 function toSupabasePage(p: Page, userId: string) {
+  let contentValue: any = p.content;
+  if (typeof p.content === 'string') {
+    try {
+      contentValue = JSON.parse(p.content);
+    } catch {
+      contentValue = { type: 'doc', content: [{ type: 'paragraph' }] };
+    }
+  }
   return {
     id: p.id,
     notebook_id: p.notebookId,
     user_id: userId,
     page_number: p.pageNumber,
-    content: p.content || '',
+    content: contentValue,
     date: p.date || null,
     created_at: new Date(p.createdAt).toISOString(),
     updated_at: new Date(p.updatedAt).toISOString(),
@@ -65,7 +95,7 @@ function fromSupabasePage(row: any): Page {
     id: row.id,
     notebookId: row.notebook_id,
     pageNumber: row.page_number,
-    content: row.content || '',
+    content: typeof row.content === 'object' ? JSON.stringify(row.content) : (row.content || ''),
     date: row.date || undefined,
     createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
     updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
@@ -116,7 +146,8 @@ export async function syncFromCloud(): Promise<void> {
 
     if (cloudList.length > 0) {
       for (const row of cloudList) {
-        const notebook = fromSupabaseNotebook(row);
+        const localExisting = await db.getNotebook(row.id);
+        const notebook = fromSupabaseNotebook(row, localExisting);
         await db.saveNotebook(notebook);
       }
 
@@ -148,12 +179,27 @@ export async function cloudSaveNotebook(notebook: Notebook): Promise<void> {
     return;
   }
 
+  const payload = toSupabaseNotebook(notebook, user.id);
   const { error } = await supabase
     .from('notebooks')
-    .upsert(toSupabaseNotebook(notebook, user.id), { onConflict: 'id' });
+    .upsert(payload, { onConflict: 'id' });
 
   if (error) {
-    console.error('cloudSaveNotebook error:', error.message, error.details, error.hint);
+    console.warn('cloudSaveNotebook upsert notice:', error.message);
+    // If the error is due to missing columns in Supabase, retry without them
+    if (
+      error.message?.includes('is_locked') ||
+      error.message?.includes('pin_code') ||
+      error.message?.includes('column') ||
+      error.code === '42703' ||
+      error.code === 'PGRST204'
+    ) {
+      const fallback = { ...payload };
+      delete fallback.is_locked;
+      delete fallback.pin_code;
+      delete fallback.is_pinned;
+      await supabase.from('notebooks').upsert(fallback, { onConflict: 'id' });
+    }
   }
 }
 

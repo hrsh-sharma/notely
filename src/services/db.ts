@@ -85,7 +85,12 @@ export async function getAllNotebooks(): Promise<Notebook[]> {
     await database.delete('notebooks', id);
   }
 
-  return cleaned.sort((a, b) => b.updatedAt - a.updatedAt);
+  return cleaned.sort((a, b) => {
+    const aPin = a.isPinned ? 1 : 0;
+    const bPin = b.isPinned ? 1 : 0;
+    if (aPin !== bPin) return bPin - aPin;
+    return b.updatedAt - a.updatedAt;
+  });
 }
 
 export async function resetToFreshSamples(): Promise<void> {

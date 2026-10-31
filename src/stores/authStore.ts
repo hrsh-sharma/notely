@@ -11,6 +11,7 @@ interface AuthState {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error?: string; message?: string }>;
   signOut: () => Promise<void>;
+  verifyPassword: (password: string) => Promise<{ success?: boolean; error?: string }>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -128,5 +129,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       useProfileStore.getState().clearProfile();
     } catch {}
     set({ session: null, user: null, isLoading: false });
+  },
+
+  verifyPassword: async (password: string) => {
+    const user = get().user;
+    if (!user || !user.email) return { error: 'No user signed in' };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password,
+      });
+      if (error) {
+        return { error: 'Incorrect account password. Please try again.' };
+      }
+      return { success: true };
+    } catch (err: any) {
+      return { error: err.message || 'Verification failed' };
+    }
   },
 }));

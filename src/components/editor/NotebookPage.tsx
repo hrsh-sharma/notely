@@ -15,6 +15,7 @@ import { Extension } from '@tiptap/core';
 import type { Page } from '../../types';
 import { useNotebookStore } from '../../stores/notebookStore';
 import { useAuthStore } from '../../stores/authStore';
+import { NotebookImage } from './extensions/NotebookImage';
 
 // Custom FontSize extension
 const FontSize = Extension.create({
@@ -74,6 +75,7 @@ export default function NotebookPage({ page, isActive, pageLabel, onEditorReady 
       TextStyle,
       Color,
       FontSize,
+      NotebookImage,
       Highlight.configure({ multicolor: true }),
     ],
     content: (() => {

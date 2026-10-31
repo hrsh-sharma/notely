@@ -12,6 +12,9 @@ export interface Notebook {
   createdAt: number;
   updatedAt: number;
   description?: string;
+  isLocked?: boolean;
+  pinCode?: string;
+  isPinned?: boolean;
 }
 
 export interface Page {

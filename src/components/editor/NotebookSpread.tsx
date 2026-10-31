@@ -17,6 +17,7 @@ import { useNotebookStore } from '../../stores/notebookStore';
 import FormattingToolbar from './FormattingToolbar';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { FontSize } from './extensions/FontSize';
+import { NotebookImage } from './extensions/NotebookImage';
 
 function buildExtensions() {
   return [
@@ -32,6 +33,7 @@ function buildExtensions() {
     Color,
     FontSize,
     Highlight.configure({ multicolor: true }),
+    NotebookImage,
   ];
 }
 

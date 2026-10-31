@@ -16,6 +16,7 @@ import type { Page } from '../../types';
 import { useNotebookStore } from '../../stores/notebookStore';
 import FormattingToolbar from './FormattingToolbar';
 import { FontSize } from './extensions/FontSize';
+import { NotebookImage } from './extensions/NotebookImage';
 
 function buildExtensions() {
   return [
@@ -28,6 +29,7 @@ function buildExtensions() {
     Color,
     FontSize,
     Highlight.configure({ multicolor: true }),
+    NotebookImage,
   ];
 }
 
